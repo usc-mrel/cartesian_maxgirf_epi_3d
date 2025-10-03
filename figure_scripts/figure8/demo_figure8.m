@@ -39,25 +39,25 @@ dicom_path2{3} = 'D:\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S40_ep
 
 %E:\projects_lenovo_20250319\cartesian_maxgirf_epi_2d\data
 
-output_path1{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00107_FID11278_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan1_gridding1_phc1_cfc0_sfc0_gnc0';
-output_path1{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00109_FID11280_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan2_gridding1_phc1_cfc0_sfc0_gnc0';
-output_path1{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00111_FID11282_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan3_gridding1_phc1_cfc0_sfc0_gnc0';
-
-output_path2{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00107_FID11278_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan1_gridding1_phc1_cfc1_sfc0_gnc0';
-output_path2{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00109_FID11280_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan2_gridding1_phc1_cfc1_sfc0_gnc0';
-output_path2{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00111_FID11282_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan3_gridding1_phc1_cfc1_sfc0_gnc0';
-
-output_path3{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00107_FID11278_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan1_gridding1_phc1_cfc1_sfc0_gnc1';
-output_path3{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00109_FID11280_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan2_gridding1_phc1_cfc1_sfc0_gnc1';
-output_path3{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00111_FID11282_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan3_gridding1_phc1_cfc1_sfc0_gnc1';
-
-dicom_path1{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S33_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan1'; % ND
-dicom_path1{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S34_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan2'; % ND
-dicom_path1{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S35_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan3'; % ND
-
-dicom_path2{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S38_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan1_S33_DIS3D'; % DIS3D
-dicom_path2{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S39_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan2_S34_DIS3D'; % DIS3D
-dicom_path2{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S40_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan3_S35_DIS3D'; % DIS3D
+% output_path1{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00107_FID11278_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan1_gridding1_phc1_cfc0_sfc0_gnc0';
+% output_path1{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00109_FID11280_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan2_gridding1_phc1_cfc0_sfc0_gnc0';
+% output_path1{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00111_FID11282_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan3_gridding1_phc1_cfc0_sfc0_gnc0';
+% 
+% output_path2{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00107_FID11278_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan1_gridding1_phc1_cfc1_sfc0_gnc0';
+% output_path2{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00109_FID11280_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan2_gridding1_phc1_cfc1_sfc0_gnc0';
+% output_path2{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00111_FID11282_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan3_gridding1_phc1_cfc1_sfc0_gnc0';
+% 
+% output_path3{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00107_FID11278_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan1_gridding1_phc1_cfc1_sfc0_gnc1';
+% output_path3{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00109_FID11280_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan2_gridding1_phc1_cfc1_sfc0_gnc1';
+% output_path3{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00111_FID11282_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan3_gridding1_phc1_cfc1_sfc0_gnc1';
+% 
+% dicom_path1{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S33_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan1'; % ND
+% dicom_path1{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S34_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan2'; % ND
+% dicom_path1{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S35_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan3'; % ND
+% 
+% dicom_path2{1} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S38_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan1_S33_DIS3D'; % DIS3D
+% dicom_path2{2} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S39_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan2_S34_DIS3D'; % DIS3D
+% dicom_path2{3} = 'E:\projects_lenovo_20250319\cartesian_maxgirf_epi_3d\data\vol1109_20250302\dicom\S40_ep3d_tra_AP_highres_TR186_TE80_etl61_0.8mm_scan3_S35_DIS3D'; % DIS3D
 
 %% Calculate the number of averages
 nr_averages = length(dicom_path1);
@@ -358,9 +358,6 @@ end
 
 %% Read a .cfl file
 output_path = 'D:\cartesian_maxgirf_epi_3d\data\vol1109_20250302\meas_MID00111_FID11282_ep3d_tra_AP_highres_TR186_TE80_etl61_0_8mm_scan3_gridding1_phc1_cfc1_sfc0_gnc1';
-% Hack
-output_path = strrep(output_path, 'D:', 'E:\projects_lenovo_20250319');
-
 slice_type = 'flat';
 
 %--------------------------------------------------------------------------
@@ -473,46 +470,34 @@ if phase_sign == -1
     dz = flip(dz,2);
 end
 
-%% Read a .cfl file
-output_path = 'D:\cartesian_maxgirf_epi_3d\figure_scripts\figure_vol1109';
-% Hack
-output_path = strrep(output_path, 'D:', 'E:\projects_lenovo_20250319');
-
-%--------------------------------------------------------------------------
-% img_denoised (Nx x Ny x Nz x nr_averages)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, 'img1_denoised');
-tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
-img1_denoised = readcfl(cfl_file);
-fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-
-%--------------------------------------------------------------------------
-% img_denoised (Nx x Ny x Nz x nr_averages)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, 'img2_denoised');
-tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
-img2_denoised = readcfl(cfl_file);
-fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-
-%--------------------------------------------------------------------------
-% img_denoised (Nx x Ny x Nz x nr_averages)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, 'img3_denoised');
-tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
-img3_denoised = readcfl(cfl_file);
-fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+return
 
 %% Perform averaging
-img1_avg = mean(img1,4); % Gridding/PHC
-img2_avg = mean(img2,4); % Gridding/PHC/CFC
-img3_avg = mean(img3,4); % Gridding/PHC/CFC/GNC
+% img1_avg = mean(img1,4); % Gridding/PHC
+% img2_avg = mean(img2,4); % Gridding/PHC/CFC
+% img3_avg = mean(img3,4); % Gridding/PHC/CFC/GNC
+% 
+% img1_dicom_avg = mean(img1_dicom,4); % Gridding/PHC
+% img2_dicom_avg = mean(img2_dicom,4); % Gridding/PHC/CFC/GNC
 
-img1_denoised_avg = mean(img1_denoised,4); % Gridding/PHC
-img2_denoised_avg = mean(img2_denoised,4); % Gridding/PHC/CFC
-img3_denoised_avg = mean(img3_denoised,4); % Gridding/PHC/CFC/GNC
+%% Scale images
+r = 62;
+c = 86;
+s = 108;
 
-img1_dicom_avg = mean(img1_dicom,4); % Gridding/PHC
-img2_dicom_avg = mean(img2_dicom,4); % Gridding/PHC/CFC/GNC
+scale_factor1 = abs(img1(r,c,s,1));
+scale_factor2 = abs(img2(r,c,s,1));
+scale_factor3 = abs(img3(r,c,s,1));
+
+scale_factor1_dicom = abs(img1_dicom(r,c,s,1));
+scale_factor2_dicom = abs(img2_dicom(r,c,s,1));
+
+img1_scaled = img1 / scale_factor1;
+img2_scaled = img2 / scale_factor2;
+img3_scaled = img3 / scale_factor3;
+
+img1_dicom_scaled = img1_dicom / scale_factor1_dicom;
+img2_dicom_scaled = img2_dicom / scale_factor2_dicom;
 
 %% Scale images
 r = 129;
@@ -523,20 +508,12 @@ scale_factor1 = abs(img1_avg(r,c,s));
 scale_factor2 = abs(img2_avg(r,c,s));
 scale_factor3 = abs(img3_avg(r,c,s));
 
-scale_factor1_denoised = abs(img1_denoised_avg(r,c,s));
-scale_factor2_denoised = abs(img2_denoised_avg(r,c,s));
-scale_factor3_denoised = abs(img3_denoised_avg(r,c,s));
-
 scale_factor1_dicom = abs(img1_dicom_avg(r,c,s));
 scale_factor2_dicom = abs(img2_dicom_avg(r,c,s));
 
 img1_avg_scaled = img1_avg / scale_factor1;
 img2_avg_scaled = img2_avg / scale_factor2;
 img3_avg_scaled = img3_avg / scale_factor3;
-
-img1_denoised_avg_scaled = img1_denoised_avg / scale_factor1_denoised;
-img2_denoised_avg_scaled = img2_denoised_avg / scale_factor2_denoised;
-img3_denoised_avg_scaled = img3_denoised_avg / scale_factor3_denoised;
 
 img1_dicom_avg_scaled = img1_dicom_avg / scale_factor1_dicom;
 img2_dicom_avg_scaled = img2_dicom_avg / scale_factor2_dicom;
@@ -577,7 +554,11 @@ FontSize = 12;
 
 % 107
 % 109
+
 axial_slice_number = 108;
+
+
+%for axial_slice_number = 1:Nz
 
 idx1_range = (14:235).'; % left-right
 idx2_range = (14:256).'; % up-down
@@ -838,3 +819,5 @@ set(ax12, 'Position', [0.7132+0.01 0.0342-0.039 0.2289 0.4184]);
 
 export_fig(sprintf('figure8_slc%d', axial_slice_number), '-r300', '-tif', '-c[80, 120, 140, 20]'); % [top,right,bottom,left]
 close gcf;
+
+%end

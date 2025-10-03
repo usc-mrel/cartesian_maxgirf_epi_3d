@@ -1,10 +1,10 @@
-% demo_step3_cartesian_maxgirf_3d_prepare_ksp_imaging.m
+% demo_cartesian_maxgirf_3d_prepare_ksp_imaging.m
 % Written by Nam Gyun Lee
 % Email: namgyunl@usc.edu, ggang56@gmail.com (preferred)
-% Started: 01/13/2025, Last modified: 01/18/2025
+% Started: 01/13/2025, Last modified: 06/28/2025
 
 %% Clean slate
-close all; clearvars -except json_number nr_json_files json_files json_file grad_file_path; clc;
+close all; clearvars -except json_number nr_json_files json_files json_file fieldmap_json_file grad_file_path; clc;
 
 %% Start a stopwatch timer
 start_time = tic;
@@ -40,13 +40,14 @@ bart_path = json.bart_path;
 %--------------------------------------------------------------------------
 % Reconstruction parameters
 %--------------------------------------------------------------------------
-Lmax          = json.recon_parameters.Lmax;          % maximum rank of the SVD approximation of a higher-order encoding matrix
-slice_type    = json.recon_parameters.slice_type;    % type of an excitation slice: "curved" vs "flat"
-phc_flag      = json.recon_parameters.phc_flag;      % 1=yes, 0=no
-gridding_flag = json.recon_parameters.gridding_flag; % 1=yes, 0=no
-cfc_flag      = json.recon_parameters.cfc_flag;      % 1=yes, 0=no
-sfc_flag      = json.recon_parameters.sfc_flag;      % 1=yes, 0=no
-gnc_flag      = json.recon_parameters.gnc_flag;      % 1=yes, 0=no
+Lmax              = json.recon_parameters.Lmax;              % maximum rank of the SVD approximation of a higher-order encoding matrix
+cutoff_percentage = json.recon_parameters.cutoff_percentage; % cutoff percentage to calculate an approximate full rank of a higher-order encoding matrix
+slice_type        = json.recon_parameters.slice_type;        % type of an excitation slice: "curved" vs "flat"
+phc_flag          = json.recon_parameters.phc_flag;          % 1=yes, 0=no
+gridding_flag     = json.recon_parameters.gridding_flag;     % 1=yes, 0=no
+cfc_flag          = json.recon_parameters.cfc_flag;          % 1=yes, 0=no
+sfc_flag          = json.recon_parameters.sfc_flag;          % 1=yes, 0=no
+gnc_flag          = json.recon_parameters.gnc_flag;          % 1=yes, 0=no
 
 %% Make an output path
 mkdir(output_path);
@@ -338,6 +339,14 @@ R_pcs2dcs = siemens_calculate_transform_pcs_to_dcs(patient_position);
 %% Calculate a rotation matrix from the GCS to the DCS
 R_gcs2dcs = R_pcs2dcs * R_gcs2pcs_ismrmrd;
 
+%% Calculate a rotation matrix from [RO,PE,SL] to [x,y,z]
+%--------------------------------------------------------------------------
+% [x]   [         ][0 1 0][RO]
+% [y] = [R_gcs2dcs][1 0 0][PE]
+% [z]   [         ][0 0 1][SL]
+%--------------------------------------------------------------------------
+R_rps2dcs = R_gcs2dcs * [0 1 0; 1 0 0; 0 0 1];
+
 %% Get a slice offset in the PCS from Siemens TWIX format
 if isfield(twix.hdr.MeasYaps.sSliceArray.asSlice{1}, 'sPosition')
     if isfield(twix.hdr.MeasYaps.sSliceArray.asSlice{1}.sPosition, 'dSag')
@@ -538,6 +547,12 @@ Gu = (2 * pi / encoded_resolution(1)) / ((gamma * 1e-3) * ((t1 + t2) - (ta^2 + t
 % Set the slew rate
 %--------------------------------------------------------------------------
 SR = Gu / (-t1 + t2); % [mT/m/sec]
+
+%% Calculate the amplitude of a readout gradient lobe in the RPS [mT/m]
+g_rps = cat(1, Gu, 0, 0); % [RO,PE,SL]
+
+%% Calculate the amplitude of a readout gradient lobe in the DCS [mT/m]
+g_dcs = R_rps2dcs * g_rps;
 
 %% Calculate a vertex-based readout gradient lobe [mT/m]
 t_vertex_readout_gradient_lobe = [0 ramp_up_time ramp_up_time + flat_top_time ramp_up_time + flat_top_time + ramp_down_time].'; % [sec]
@@ -876,6 +891,7 @@ else
 end
 
 %% Write a .cfl file
+if 0
 %--------------------------------------------------------------------------
 % t_grt (grad_samples x 1)
 %--------------------------------------------------------------------------
@@ -955,6 +971,7 @@ cfl_file = fullfile(output_path, 'k_img_adc');
 tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
 writecfl(cfl_file, k_adc);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+end
 
 %% Calculate a nonuniform readout k-space trajectory [rad/m]
 %--------------------------------------------------------------------------
@@ -1041,7 +1058,7 @@ subtitle('Readout gradient lobe', 'Interpreter', 'latex', 'FontSize', 12);
 legend(ax1, 'Readout gradient lobe', 'ADC sample locations', 'Interpreter', 'latex', 'Location', 'northwest', 'FontSize', 10);
 
 text(ax1, ax1.XLim(2) * 1.15, 29.5, 'Ramp sampling in EPI', 'Color', blue, 'Interpreter', 'latex', 'FontSize', 20, 'HorizontalAlignment', 'center');
-text(ax1, ax1.XLim(2) * 1.15, 26.5, sprintf('$$t_{a}/t_{\\mathrm{ramp-up}}/t_{\\mathrm{plateau}}/t_{\\mathrm{ramp-down}}$$ = %3.0f/%2.0f/%3.0f/%2.0f [$$\\mu$$sec]', acq_delay_time * 1e6, ramp_up_time * 1e6, flat_top_time * 1e6, ramp_down_time * 1e6), 'Color', green_siemens, 'Interpreter', 'latex', 'FontSize', 14, 'HorizontalAlignment', 'center');
+text(ax1, ax1.XLim(2) * 1.15, 26.5, sprintf('$$G_{\\mathrm{u}} = %4.2f$$ [mT/m], $$t_{a}/t_{\\mathrm{ramp-up}}/t_{\\mathrm{plateau}}/t_{\\mathrm{ramp-down}}$$ = %3.0f/%2.0f/%3.0f/%2.0f [$$\\mu$$sec]', Gu, acq_delay_time * 1e6, ramp_up_time * 1e6, flat_top_time * 1e6, ramp_down_time * 1e6), 'Color', green_siemens, 'Interpreter', 'latex', 'FontSize', 14, 'HorizontalAlignment', 'center');
 text(ax1, ax1.XLim(2) * 1.15, 23.5, sprintf('bandwidth = %3.0f [Hz/Px], ADC samples = %d, dwell time = %3.1f [$\\mu$sec]', bandwidth, num_samples, dwell_time * 1e6), 'Color', green_siemens, 'Interpreter', 'latex', 'FontSize', 14, 'HorizontalAlignment', 'center');
 
 ax2 = subplot(1,2,2);
@@ -1103,6 +1120,82 @@ cfl_file = fullfile(output_path, sprintf('z_%s', slice_type));
 tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
 z = readcfl(cfl_file);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+%% Calculate the concomitant field phase
+%--------------------------------------------------------------------------
+% Calculate the amplitude of a trapezoid
+%--------------------------------------------------------------------------
+Gx = g_dcs(1);
+Gy = g_dcs(2);
+Gz = g_dcs(3);
+
+%--------------------------------------------------------------------------
+% Calculate the rise time of a trapezoid
+%--------------------------------------------------------------------------
+r = ramp_up_time;
+
+%--------------------------------------------------------------------------
+% Calculate the duration of a trapezoid
+%--------------------------------------------------------------------------
+w = echo_spacing;
+
+%--------------------------------------------------------------------------
+% Calculate the concomitant field phase
+%--------------------------------------------------------------------------
+% [rad/sec/T] / [T] [m]^2 * [mT/m]^2 * [T/1e3mT]^2 * [sec] => [rad]
+conc_phase1 = gamma / (2 * B0) * ((Gx * 1e-3) * z - (Gz * 1e-3) * x / 2).^2 * ((w - 2 * r) + 2 * r / 3);
+conc_phase2 = gamma / (2 * B0) * ((Gy * 1e-3) * z - (Gz * 1e-3) * y / 2).^2 * ((w - 2 * r) + 2 * r / 3);
+conc_phase = conc_phase1 + conc_phase2;
+
+%% Calculate a parabolic shift [m]
+%--------------------------------------------------------------------------
+% Calculate a sampling interval in the phase-encoding direction [rad/m]
+%--------------------------------------------------------------------------
+dkv = (2 * pi) / encoded_fov(2); % [rad/m]
+
+%--------------------------------------------------------------------------
+% Calculate the number of interleaves per kx-ky plane
+%--------------------------------------------------------------------------
+nr_interleaves = floor(Nky / etl);
+
+%--------------------------------------------------------------------------
+% Calculate a parabolic shift [m]
+% dk_blip = nr_interleaves * acceleration_factor1 * dky [rad/m]
+%--------------------------------------------------------------------------
+parabolic_shift = conc_phase / (nr_interleaves * acceleration_factor1 * dkv); % [rad] / [rad/m] => [m]
+
+%% Write a .cfl file
+%--------------------------------------------------------------------------
+% parabolic_shift (Nkx x Nky x Nkz)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, 'parabolic_shift');
+tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+writecfl(cfl_file, parabolic_shift);
+fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+%% Display a parabolic shift in the DCS
+c1 = floor(Nkx/2) + 1;
+c2 = floor(Nky/2) + 1;
+c3 = floor(Nkz/2) + 1;
+
+figure('Color', 'w', 'Position', [355 220 1190 758]);
+hold on;
+surf(reshape(x(:,:,c3) * 1e3, [Nkx Nky]), reshape(y(:,:,c3) * 1e3, [Nkx Nky]), reshape(z(:,:,c3) * 1e3, [Nkx Nky]), reshape(parabolic_shift(:,:,c3) * 1e3, [Nkx Nky]), 'EdgeColor', 'none'); % transversal
+surf(reshape(x(c1,:,:) * 1e3, [Nky Nkz]), reshape(y(c1,:,:) * 1e3, [Nky Nkz]), reshape(z(c1,:,:) * 1e3, [Nky Nkz]), reshape(parabolic_shift(c1,:,:) * 1e3, [Nky Nkz]), 'EdgeColor', 'none'); % sagittal
+surf(reshape(x(:,c2,:) * 1e3, [Nkx Nkz]), reshape(y(:,c2,:) * 1e3, [Nkx Nkz]), reshape(z(:,c2,:) * 1e3, [Nkx Nkz]), reshape(parabolic_shift(:,c2,:) * 1e3, [Nkx Nkz]), 'EdgeColor', 'none'); % coronal
+colormap(turbo(256));
+axis image;
+title('Parabolic shift [mm]', 'FontWeight', 'normal', 'FontSize', 14, 'Interpreter', 'latex');
+xlabel('x [mm]', 'Interpreter', 'latex', 'FontSize', 14);
+ylabel('y [mm]', 'Interpreter', 'latex', 'FontSize', 14);
+zlabel('z [mm]', 'Interpreter', 'latex', 'FontSize', 14);
+set(gca, 'Box', 'on', 'TickLabelInterpreter', 'latex', 'YDir', 'reverse', 'ZDir', 'reverse');
+view(25,19);
+hc = colorbar;
+title(hc, '[mm]', 'Interpreter', 'latex', 'FontSize', 14);
+set(hc, 'Position', [0.925257703081233 0.10868073878628 0.0179271708683475 0.815], 'TickLabelInterpreter', 'latex', 'FontSize', 14);
+export_fig(fullfile(output_path, sprintf('parabolic_shift')), '-r300', '-tif', '-c[0, 0, 0, 0]'); % [top,right,bottom,left]
+close gcf;
 
 %% Create a sampling mask
 mask = false(Nkx, Nky, Nkz, 'logical');
@@ -1181,23 +1274,96 @@ if ~exist(strcat(cfl_file, '.cfl'), 'file')
     dw = reshape(dr_gcs(3,:), [Nkx Nky Nkz]); % SL [m]
 end
 
-%% Read a .cfl file
-if sfc_flag
-    %----------------------------------------------------------------------
-    % fieldmap (Nkx x Nky x Nkz)
-    %----------------------------------------------------------------------
-    cfl_file = fullfile(output_path, sprintf('fieldmap_smooth_gnl%d_%s', 1, slice_type));
-    tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
-    fieldmap = real(readcfl(cfl_file));
+%% Write a .cfl file
+%--------------------------------------------------------------------------
+% circle_mask (Nkx x Nky x Nkz)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, sprintf('circle_mask_%s', slice_type));
+tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+writecfl(cfl_file, circle_mask);
+fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+%--------------------------------------------------------------------------
+% dx (Nkx x Nky x Nkz)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, sprintf('dx_%s', slice_type));
+if ~exist(strcat(cfl_file, '.cfl'), 'file')
+    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+    writecfl(cfl_file, dx);
     fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-else
-    fieldmap = zeros(Nx, Nky, Nkz, 'single');
 end
 
-%% Need to fix this Nkx x Nky x Nkz => Nx x Nky x Nkz!
+%--------------------------------------------------------------------------
+% dy (Nkx x Nky x Nkz)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, sprintf('dy_%s', slice_type));
+if ~exist(strcat(cfl_file, '.cfl'), 'file')
+    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+    writecfl(cfl_file, dy);
+    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+end
 
-%% Get a grid within 1X FOV
+%--------------------------------------------------------------------------
+% dz (Nkx x Nky x Nkz)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, sprintf('dz_%s', slice_type));
+if ~exist(strcat(cfl_file, '.cfl'), 'file')
+    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+    writecfl(cfl_file, dz);
+    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+end
+
+%--------------------------------------------------------------------------
+% du (Nkx x Nky x Nkz)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, sprintf('du_%s', slice_type));
+if ~exist(strcat(cfl_file, '.cfl'), 'file')
+    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+    writecfl(cfl_file, du);
+    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+end
+
+%--------------------------------------------------------------------------
+% dv (Nkx x Nky x Nkz)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, sprintf('dv_%s', slice_type));
+if ~exist(strcat(cfl_file, '.cfl'), 'file')
+    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+    writecfl(cfl_file, dv);
+    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+end
+
+%--------------------------------------------------------------------------
+% dw (Nkx x Nky x Nkz)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, sprintf('dw_%s', slice_type));
+if ~exist(strcat(cfl_file, '.cfl'), 'file')
+    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+    writecfl(cfl_file, dw);
+    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+end
+
+%% Read a .cfl file
+if sfc_flag
+    fieldmap = zeros(Nkx, Nky, Nkz, 'single');
+    idx1_range = (-floor(Nx/2):ceil(Nx/2)-1).' + floor(Nkx/2) + 1;
+    idx2_range = (-floor(Ny/2):ceil(Ny/2)-1).' + floor(Nky/2) + 1;
+    idx3_range = (-floor(Nz/2):ceil(Nz/2)-1).' + floor(Nkz/2) + 1;
+
+    %----------------------------------------------------------------------
+    % fieldmap (Nx x Ny x Nz)
+    %----------------------------------------------------------------------
+    cfl_file = fullfile(output_path, 'fieldmap_smooth');
+    tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
+    fieldmap(idx1_range,idx2_range,idx3_range) = real(readcfl(cfl_file));
+    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+else
+    fieldmap = zeros(Nkx, Nky, Nkz, 'single');
+end
+
+%% Remove readout oversampling (Nkx x Nky x Nkz => Nx x Nky x Nkz)
 idx1_range_fov = (-floor(Nx/2):ceil(Nx/2)-1).' + floor(Nkx/2) + 1;
+fieldmap = fieldmap(idx1_range_fov,:,:);
 
 % Nkx x Nky x Nkz => Nx x Nky x Nkz
 x_fov = x(idx1_range_fov,:,:);
@@ -1250,12 +1416,42 @@ if ~exist(strcat(cfl_file, '.cfl'), 'file')
     S_subsampled = diag(single(s_tilde(1:Lmax,1:Lmax))); % Lmax x Lmax
     V_subsampled = reshape(single(v_tilde(:,1:Lmax) * s_tilde(1:Lmax,1:Lmax)'), [Nx / subsampling_factor Nky / subsampling_factor Nkz / subsampling_factor Lmax]);
     fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+    S_scaled = S_subsampled / S_subsampled(1);
+    cumulative_sum = cumsum(S_scaled) / sum(S_scaled);
+    indices = find(cumulative_sum > cutoff_percentage * 1e-2);
+    L = indices(1);
 end
 
-figure('Color', 'w');
-plot(S_subsampled);
-export_fig(fullfile(output_path, sprintf('S_subsampled')), '-r300', '-tif'); % [top,right,bottom,left]
-close gcf;
+%% Display the singular values and cumulative sum
+if ~exist(strcat(cfl_file, '.cfl'), 'file')
+    FontSize = 12;
+
+    figure('Color', 'w', 'Position', [3 533 1048 455]);
+    subplot(1,2,1);
+    plot(S_scaled, '.-', 'LineWidth', 1, 'MarkerSize', 12, 'Color', color_order{1});
+    grid on;
+    grid minor;
+    set(gca, 'YScale', 'log', 'TickLabelInterpreter', 'latex', 'FontSize', FontSize);
+    axis square;
+    xlabel('$$\ell$$', 'Interpreter', 'latex', 'FontSize', FontSize + 2);
+    ylabel('Singular values, $$\sigma_{\ell}$$', 'Interpreter', 'latex', 'FontSize', FontSize + 2);
+
+    subplot(1,2,2);
+    hold on;
+    plot(cumulative_sum, '.-', 'LineWidth', 1, 'MarkerSize', 12, 'Color', color_order{1});
+    plot([L L], [0 1.1], '--', 'Color', color_order{2}, 'LineWidth', 1);
+    axis square;
+    grid on;
+    grid minor;
+    set(gca, 'Box', 'on', 'TickLabelInterpreter', 'latex', 'FontSize', FontSize);
+    ylim([0 1.1]);
+    legend('', sprintf('%5.2f$$\\%%$$ cutoff, L = %d', cutoff_percentage, L), 'Location', 'Southwest', 'Interpreter', 'latex', 'FontSize', FontSize);
+    xlabel('$$\ell$$', 'Interpreter', 'latex', 'FontSize', FontSize + 2);
+    ylabel('Cumulative sum, $$(\Sigma_{k=1}^{\ell}\sigma_{k}) / (\Sigma_{k=1}^{L_{\mathrm{max}}}\sigma_{k})$$', 'Interpreter', 'latex', 'FontSize', FontSize + 2);
+    export_fig(fullfile(output_path, sprintf('singular_values_and_cumulative_sum')), '-r300', '-tif'); % [top,right,bottom,left]
+    close gcf;
+end
 
 %% Interpolate spatial basis vectors
 if ~exist(strcat(cfl_file, '.cfl'), 'file')
@@ -1337,70 +1533,12 @@ end
 
 %% Write a .cfl file
 %--------------------------------------------------------------------------
-% circle_mask (Nkx x Nky x Nkz)
+% L (1 x 1)
 %--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('circle_mask_%s', slice_type));
-tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
-writecfl(cfl_file, circle_mask);
-fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-
-%--------------------------------------------------------------------------
-% dx (Nkx x Nky x Nkz)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('dx_%s', slice_type));
+cfl_file = fullfile(output_path, sprintf('L_%s', slice_type));
 if ~exist(strcat(cfl_file, '.cfl'), 'file')
     tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
-    writecfl(cfl_file, dx);
-    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-end
-
-%--------------------------------------------------------------------------
-% dy (Nkx x Nky x Nkz)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('dy_%s', slice_type));
-if ~exist(strcat(cfl_file, '.cfl'), 'file')
-    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
-    writecfl(cfl_file, dy);
-    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-end
-
-%--------------------------------------------------------------------------
-% dz (Nkx x Nky x Nkz)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('dz_%s', slice_type));
-if ~exist(strcat(cfl_file, '.cfl'), 'file')
-    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
-    writecfl(cfl_file, dz);
-    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-end
-
-%--------------------------------------------------------------------------
-% du (Nkx x Nky x Nkz)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('du_%s', slice_type));
-if ~exist(strcat(cfl_file, '.cfl'), 'file')
-    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
-    writecfl(cfl_file, du);
-    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-end
-
-%--------------------------------------------------------------------------
-% dv (Nkx x Nky x Nkz)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('dv_%s', slice_type));
-if ~exist(strcat(cfl_file, '.cfl'), 'file')
-    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
-    writecfl(cfl_file, dv);
-    fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
-end
-
-%--------------------------------------------------------------------------
-% dw (Nkx x Nky x Nkz)
-%--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('dw_%s', slice_type));
-if ~exist(strcat(cfl_file, '.cfl'), 'file')
-    tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
-    writecfl(cfl_file, dw);
+    writecfl(cfl_file, L);
     fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 end
 

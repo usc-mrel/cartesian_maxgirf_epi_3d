@@ -571,6 +571,8 @@ zpad_factor = 4;
 
 slice_number = 32;
 
+for slice_number = 1:Nz
+
 ksp1 = sqrt(Nx * Ny) * fftshift(ifft2(ifftshift(img1(:,:,slice_number))));
 ksp2 = sqrt(Nx * Ny) * fftshift(ifft2(ifftshift(img2(:,:,slice_number))));
 ksp3 = sqrt(Nx * Ny) * fftshift(ifft2(ifftshift(img3(:,:,slice_number))));
@@ -622,13 +624,23 @@ scale_factor4 = abs(img4_interp(c1,c2));
 scale_factor_dicom1 = abs(img1_dicom_interp(c1,c2));
 scale_factor_dicom2 = abs(img2_dicom_interp(c1,c2));
 
-img1_scaled = img1_interp / scale_factor1;
-img2_scaled = img2_interp / scale_factor2;
-img3_scaled = img3_interp / scale_factor3;
-img4_scaled = img4_interp / scale_factor4;
+% img1_scaled = img1_interp / scale_factor1;
+% img2_scaled = img2_interp / scale_factor2;
+% img3_scaled = img3_interp / scale_factor3;
+% img4_scaled = img4_interp / scale_factor4;
 
-img1_dicom_scaled = img1_dicom_interp / scale_factor_dicom1;
-img2_dicom_scaled = img2_dicom_interp / scale_factor_dicom2;
+% img1_dicom_scaled = img1_dicom_interp / scale_factor_dicom1;
+% img2_dicom_scaled = img2_dicom_interp / scale_factor_dicom2;
+
+img1_scaled = img1_interp / 1;
+img2_scaled = img2_interp / 1;
+img3_scaled = img3_interp / 1;
+img4_scaled = img4_interp / 1;
+
+img1_dicom_scaled = img1_dicom_interp / 1;
+img2_dicom_scaled = img2_dicom_interp / 1;
+
+
 
 %% Display images
 baby_blue = [193 220 243] / 255;
@@ -692,7 +704,7 @@ plot(ax1, [idx1_range_zoom(1) idx1_range_zoom(end)], [idx2_range_zoom(end) idx2_
 
 axis image ij off;
 colormap(ax1, gray(256));
-clim(ax1, climits1);
+%clim(ax1, climits1);
 title(ax1, 'Cartesian MaxGIRF', 'Color', 'k', 'Interpreter', 'tex', 'FontSize', 14, 'FontWeight', 'bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 subtitle(ax1, sprintf('Gridding/PHC'), 'Interpreter', 'tex', 'FontSize', FontSize, 'FontWeight', 'normal');
 text(ax1, 2, 0, '(A)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
@@ -706,7 +718,7 @@ ax2 = subplot(4,4,2);
 imagesc(ax2, abs(img1_dicom_scaled.'));
 axis image off;
 colormap(ax2, gray(256));
-clim(ax2, climits2);
+%clim(ax2, climits2);
 title(ax2, 'Traditional recon', 'Color', 'k', 'Interpreter', 'tex', 'FontSize', 14, 'FontWeight', 'bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 subtitle(ax2, sprintf('Gridding/PHC'), 'Interpreter', 'tex', 'FontSize', FontSize, 'FontWeight', 'normal');
 text(ax2, 2, 0, '(B)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
@@ -750,7 +762,7 @@ ax3 = subplot(4,4,3);
 imagesc(ax3, abs(img3_scaled.'));
 axis image off;
 colormap(ax3, gray(256));
-clim(ax3, climits1);
+%clim(ax3, climits1);
 title(ax3, 'Cartesian MaxGIRF', 'Color', 'k', 'Interpreter', 'tex', 'FontSize', 14, 'FontWeight', 'bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 subtitle(ax3, sprintf('Gridding/PHC/{\\color[rgb]{%f %f %f}CFC}', orange_siemens(1,1), orange_siemens(1,2), orange_siemens(1,3)), 'Rotation', 0, 'Color', 'k', 'Interpreter', 'tex', 'FontSize', FontSize, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 text(ax3, 2, 0, '(C)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
@@ -764,7 +776,7 @@ imagesc(ax4, dx(:,:,slice_number).' * 1e3);
 contour(ax4, dx(:,:,slice_number).' * 1e3, (-3:0.5:3).', 'ShowText' ,'on', 'LevelStep', 4, 'LineWidth', 1, 'Color', 'k');
 axis image ij off;
 colormap(ax4, cmap);
-clim(ax4, [-2.2 2.2]);
+%clim(ax4, [-2.2 2.2]);
 title(ax4, 'Displacement field', 'Color', 'k', 'Interpreter', 'tex', 'FontSize', 14, 'FontWeight', 'bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 subtitle(ax4, {'along the x-axis (RO direction)'}, 'Color', 'k', 'Interpreter', 'tex', 'FontSize', FontSize, 'FontWeight', 'normal', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 text(ax4, N1 / 2 - 10, 15, {'x-axis $$\longrightarrow$$'}, 'Rotation', 0, 'Color', 'k', 'Interpreter', 'latex', 'FontSize', FontSize, 'FontWeight', 'normal', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top');
@@ -780,7 +792,7 @@ ax5 = subplot(4,4,5);
 imagesc(ax5, abs(img2_scaled.'));
 axis image off;
 colormap(ax5, gray(256));
-clim(ax5, climits1);
+%clim(ax5, climits1);
 title(ax5, 'Cartesian MaxGIRF', 'Color', 'k', 'Interpreter', 'tex', 'FontSize', 14, 'FontWeight', 'bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 subtitle(ax5, sprintf('Gridding/PHC/{\\color[rgb]{%f %f %f}GNC}', orange_siemens(1,1), orange_siemens(1,2), orange_siemens(1,3)), 'Rotation', 0, 'Color', 'k', 'Interpreter', 'tex', 'FontSize', FontSize, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 text(ax5, 2, 0, '(E)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
@@ -792,7 +804,7 @@ ax6 = subplot(4,4,6);
 imagesc(ax6, abs(img2_dicom_scaled.'));
 axis image off;
 colormap(ax6, gray(256));
-clim(ax6, climits2);
+%clim(ax6, climits2);
 title(ax6, 'Traditional recon', 'Color', 'k', 'Interpreter', 'tex', 'FontSize', 14, 'FontWeight', 'bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 subtitle(ax6, sprintf('Gridding/PHC/{\\color[rgb]{%f %f %f}GNC}', green_siemens(1,1), green_siemens(1,2), green_siemens(1,3)), 'Rotation', 0, 'Color', 'k', 'Interpreter', 'tex', 'FontSize', FontSize, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 text(ax6, 2, 0, '(F)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
@@ -804,7 +816,7 @@ ax7 = subplot(4,4,7);
 imagesc(ax7, abs(img4_scaled.'));
 axis image off;
 colormap(ax7, gray(256));
-clim(ax7, climits1);
+%clim(ax7, climits1);
 title(ax7, 'Cartesian MaxGIRF', 'Color', 'k', 'Interpreter', 'tex', 'FontSize', 14, 'FontWeight', 'bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 subtitle(ax7, sprintf('Gridding/PHC/{\\color[rgb]{%f %f %f}CFC}/{\\color[rgb]{%f %f %f}GNC}', orange_siemens(1,1), orange_siemens(1,2), orange_siemens(1,3), orange_siemens(1,1), orange_siemens(1,2), orange_siemens(1,3)), 'Rotation', 0, 'Color', 'k', 'Interpreter', 'tex', 'FontSize', FontSize, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 text(ax7, 2, 0, '(G)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
@@ -818,7 +830,7 @@ imagesc(ax8, dy(:,:,slice_number).' * 1e3);
 contour(ax8, dy(:,:,slice_number).' * 1e3, (-3:0.5:3).', 'ShowText' ,'on', 'LevelStep', 4, 'LineWidth', 1, 'Color', 'k');
 axis image ij off;
 colormap(ax8, cmap);
-clim(ax8, [-2.2 2.2]);
+%clim(ax8, [-2.2 2.2]);
 title(ax8, 'Displacement field', 'Color', 'k', 'Interpreter', 'tex', 'FontSize', 14, 'FontWeight', 'bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 subtitle(ax8, {'along the y-axis (PE direction)'}, 'Color', 'k', 'Interpreter', 'tex', 'FontSize', FontSize, 'FontWeight', 'normal', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 text(ax8, 0, N2/2-12, {'y-axis $$\longrightarrow$$'}, 'Rotation', 90, 'Color', 'k', 'Interpreter', 'latex', 'FontSize', FontSize, 'FontWeight', 'normal', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'top');
@@ -834,7 +846,7 @@ ax9 = subplot(4,4,9);
 imagesc(ax9, abs(img1_scaled(idx1_range_zoom,idx2_range_zoom).'));
 axis image off;
 colormap(ax9, gray(256));
-clim(ax9, climits1 * 0.8);
+%clim(ax9, climits1 * 0.8);
 text(ax9, 2, 0, '(I)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
 text(ax9, N1_zoom/2, 0, 'Magnified inset from (A)', 'FontSize', 12, 'FontWeight', 'normal', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center');
 
@@ -845,7 +857,7 @@ ax10 = subplot(4,4,10);
 imagesc(ax10, abs(img1_dicom_scaled(idx1_range_zoom,idx2_range_zoom).'));
 axis image off;
 colormap(ax10, gray(256));
-clim(ax10, climits2 * 0.8);
+%clim(ax10, climits2 * 0.8);
 text(ax10, 2, 0, '(J)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
 text(ax10, N1_zoom/2, 0, 'Magnified inset from (B)', 'FontSize', 12, 'FontWeight', 'normal', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center');
 
@@ -856,7 +868,7 @@ ax11 = subplot(4,4,11);
 imagesc(ax11, abs(img3_scaled(idx1_range_zoom,idx2_range_zoom).'));
 axis image off;
 colormap(ax11, gray(256));
-clim(ax11, climits1 * 0.8);
+%clim(ax11, climits1 * 0.8);
 text(ax11, 2, 0, '(K)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
 text(ax11, N1_zoom/2, 0, 'Magnified inset from (C)', 'FontSize', 12, 'FontWeight', 'normal', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center');
 
@@ -867,7 +879,7 @@ ax12 = subplot(4,4,12);
 imagesc(ax12, abs(img2_scaled(idx1_range_zoom,idx2_range_zoom).'));
 axis image off;
 colormap(ax12, gray(256));
-clim(ax12, climits1 * 0.8);
+%clim(ax12, climits1 * 0.8);
 text(ax12, 2, 0, '(L)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
 text(ax12, N1_zoom/2, 0, 'Magnified inset from (E)', 'FontSize', 12, 'FontWeight', 'normal', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center');
 
@@ -878,7 +890,7 @@ ax13 = subplot(4,4,13);
 imagesc(ax13, abs(img2_dicom_scaled(idx1_range_zoom,idx2_range_zoom).'));
 axis image off;
 colormap(ax13, gray(256));
-clim(ax13, climits2 * 0.8);
+%clim(ax13, climits2 * 0.8);
 text(ax13, 2, 0, '(M)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
 text(ax13, N1_zoom/2, 0, 'Magnified inset from (F)', 'FontSize', 12, 'FontWeight', 'normal', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center');
 
@@ -889,7 +901,7 @@ ax14 = subplot(4,4,14);
 imagesc(ax14, abs(img4_scaled(idx1_range_zoom,idx2_range_zoom).'));
 axis image off;
 colormap(ax14, gray(256));
-clim(ax14, climits1 * 0.8);
+%clim(ax14, climits1 * 0.8);
 text(ax14, 2, 0, '(N)', 'FontSize', 12, 'FontWeight', 'Bold', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'left');
 text(ax14, N1_zoom/2, 0, 'Magnified inset from (G)', 'FontSize', 12, 'FontWeight', 'normal', 'Color', 'w', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center');
 
@@ -912,5 +924,6 @@ set(ax13, 'Position', [0.3595 0.0755-0.1 0.2790 0.2570]);
 set(ax14, 'Position', [0.6427 0.0755-0.1 0.2790 0.2570]);
 
 export_fig(sprintf('figure7_slc%d', slice_number), '-r300', '-tif', '-c[280, 100, 80, 170]'); % [top,right,bottom,left]
-%close gcf;
+close gcf;
+end
 

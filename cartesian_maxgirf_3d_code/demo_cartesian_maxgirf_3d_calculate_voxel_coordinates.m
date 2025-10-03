@@ -1,4 +1,4 @@
-% demo_step1_cartesian_maxgirf_3d_calculate_voxel_coordinates.m
+% demo_cartesian_maxgirf_3d_calculate_voxel_coordinates.m
 % Written by Nam Gyun Lee
 % Email: namgyunl@usc.edu, ggang56@gmail.com (preferred)
 % Started: 01/13/2025, Last modified: 01/13/2025

@@ -1,10 +1,10 @@
-% demo_step5_cartesian_maxgirf_3d_recon.m
+% demo_cartesian_maxgirf_3d_recon.m
 % Written by Nam Gyun Lee
 % Email: namgyunl@usc.edu, ggang56@gmail.com (preferred)
-% Started: 01/18/2025, Last modified: 01/18/2025
+% Started: 01/18/2025, Last modified: 06/28/2025
 
 %% Clean slate
-close all; clearvars -except json_number nr_json_files json_files json_file grad_file_path; clc;
+close all; clearvars -except json_number nr_json_files json_files json_file fieldmap_json_file grad_file_path; clc;
 
 %% Set a flag to save a figure
 save_figure = 1;
@@ -14,9 +14,9 @@ start_time = tic;
 
 %% Read a .json file
 tstart = tic; fprintf('%s: Reading a .json file: %s... ', datetime, json_file);
-fid = fopen(json_file); 
-json_txt = fread(fid, [1 inf], 'char=>char'); 
-fclose(fid); 
+fid = fopen(json_file);
+json_txt = fread(fid, [1 inf], 'char=>char');
+fclose(fid);
 json = jsondecode(json_txt);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 
@@ -28,18 +28,19 @@ if ispc
     ismrmrd_data_file  = strrep(json.ismrmrd_data_file, '/', '\');
     ismrmrd_noise_file = strrep(json.ismrmrd_noise_file, '/', '\');
     output_path        = strrep(json.output_path, '/', '\');
+    sens_path          = strrep(json.sens_path, '/', '\');
 else
     siemens_twix_file  = json.siemens_twix_file;
     ismrmrd_data_file  = json.ismrmrd_data_file;
     ismrmrd_noise_file = json.ismrmrd_noise_file;
     output_path        = json.output_path;
+    sens_path          = json.sens_path;
 end
 
 %--------------------------------------------------------------------------
 % Reconstruction parameters
 %--------------------------------------------------------------------------
 Lmax          = json.recon_parameters.Lmax;           % maximum rank of the SVD approximation of a higher-order encoding matrix
-L             = json.recon_parameters.L;              % rank of the SVD approximation of a higher-order encoding matrix
 lambda        = json.recon_parameters.lambda;         % l2 regularization parameter
 tol           = json.recon_parameters.tol;            % PCG tolerance
 maxiter       = json.recon_parameters.maxiter;        % PCG maximum iteration 
@@ -50,10 +51,7 @@ gridding_flag = json.recon_parameters.gridding_flag;  % 1=yes, 0=no
 cfc_flag      = json.recon_parameters.cfc_flag;       % 1=yes, 0=no
 sfc_flag      = json.recon_parameters.sfc_flag;       % 1=yes, 0=no
 gnc_flag      = json.recon_parameters.gnc_flag;       % 1=yes, 0=no
-
-if ~cfc_flag
-    L = 1;
-end
+topup_flag    = json.recon_parameters.topup_flag;     % 1=yes, 0=no
 
 %--------------------------------------------------------------------------
 % main_orientation (SAGITTAL/CORONAL/TRANSVERSAL = 0/1/2)
@@ -94,6 +92,14 @@ encoded_resolution = encoded_fov ./ [Nkx Nky Nkz]; % [m]
 
 %% Read a .cfl file
 %--------------------------------------------------------------------------
+% L (1 x 1)
+%--------------------------------------------------------------------------
+cfl_file = fullfile(output_path, sprintf('L_%s', slice_type));
+tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
+L = readcfl(cfl_file);
+fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+%--------------------------------------------------------------------------
 % ksp_cartesian (Nkx x Nky x Nkz x Nc)
 %--------------------------------------------------------------------------
 cfl_file = fullfile(output_path, sprintf('ksp_img_cartesian_gridding%d_phc%d', gridding_flag, phc_flag));
@@ -120,7 +126,7 @@ fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 %--------------------------------------------------------------------------
 % sens (Nkx x Nky x Nkz x Nc)
 %--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('sens_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag));
+cfl_file = fullfile(sens_path, sprintf('sens_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_topup%d', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag));
 tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
 sens = readcfl(cfl_file);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
@@ -128,7 +134,7 @@ fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 %--------------------------------------------------------------------------
 % ev_maps (Nkx x Nky x Nkz)
 %--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('ev_maps_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag));
+cfl_file = fullfile(sens_path, sprintf('ev_maps_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_topup%d', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag));
 tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
 ev_maps = readcfl(cfl_file);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
@@ -245,13 +251,6 @@ tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
 V = readcfl(cfl_file);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 
-%% Apply a threshold mask on CSMs
-ev_mask = (ev_maps > 0.94);
-ev_mask2 = bwareaopen(ev_mask, 60); % Keep only blobs with an area of 60 pixels or more.
-se = strel('disk',5);
-ev_mask_dilated = imdilate(ev_mask2,se);
-%sens = bsxfun(@times, sens, ev_mask_dilated);
-
 %% Calculate spatial positions for Type-3 NUFFT
 if gnc_flag
     p1 = (u + du) / encoded_fov(1) * (2 * pi); % RO [-pi,pi]
@@ -284,14 +283,19 @@ AhA = @(x) cartesian_maxgirf_3d_normal(x, sens, mask, p1, p2, p3, iflag, eps, su
 clear cartesian_maxgirf_3d_normal;
 tstart = tic; fprintf('%s: Performing Cartesian MaxGIRF reconstruction:\n', datetime);
 [img, flag, relres, iter, resvec] = pcg(@(x) AhA(x), Ah(ksp), tol, maxiter);
+reconstruction_time = toc(tstart);
 img = reshape(img, [Nkx Nky Nkz]);
-fprintf('%s: done! (%6.4f/%6.4f sec)\n', datetime, toc(tstart), toc(start_time));
+fprintf('%s: done! (%6.4f/%6.4f sec)\n', datetime, reconstruction_time, toc(start_time));
+
+fid = fopen(fullfile(output_path, 'reconstruction_time.txt'), 'w');
+fprintf(fid, '%6.4f sec\n', reconstruction_time);
+fclose(fid);
 
 %% Write a .cfl file
 %--------------------------------------------------------------------------
 % img (Nkx x Nky x Nkz)
 %--------------------------------------------------------------------------
-img_filename = sprintf('img_maxgirf_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_%s_i%d_l%4.2f', gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, slice_type, maxiter, lambda);
+img_filename = sprintf('img_maxgirf_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_topup%d_i%d_l%4.2f', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag, maxiter, lambda);
 cfl_file = fullfile(output_path, img_filename);
 tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
 writecfl(cfl_file, img);
@@ -306,6 +310,42 @@ tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
 writecfl(cfl_file, support_mask);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 
+%--------------------------------------------------------------------------
+% flag
+%--------------------------------------------------------------------------
+flag_filename = sprintf('flag_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_topup%d_i%d_l%4.2f', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag, maxiter, lambda);
+cfl_file = fullfile(output_path, flag_filename);
+tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+writecfl(cfl_file, flag);
+fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+%--------------------------------------------------------------------------
+% relres
+%--------------------------------------------------------------------------
+relres_filename = sprintf('relres_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_topup%d_i%d_l%4.2f', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag, maxiter, lambda);
+cfl_file = fullfile(output_path, relres_filename);
+tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+writecfl(cfl_file, relres);
+fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+%--------------------------------------------------------------------------
+% iter
+%--------------------------------------------------------------------------
+iter_filename = sprintf('iter_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_topup%d_i%d_l%4.2f', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag, maxiter, lambda);
+cfl_file = fullfile(output_path, iter_filename);
+tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+writecfl(cfl_file, iter);
+fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+%--------------------------------------------------------------------------
+% resvec
+%--------------------------------------------------------------------------
+resvec_filename = sprintf('resvec_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_topup%d_i%d_l%4.2f', slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag, maxiter, lambda);
+cfl_file = fullfile(output_path, resvec_filename);
+tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
+writecfl(cfl_file, resvec);
+fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
 %% Display the magnitude of an image
 FontSize = 14;
 
@@ -313,7 +353,7 @@ c1 = floor(Nkx/2) + 1;
 c2 = floor(Nky/2) + 1;
 c3 = floor(Nkz/2) + 1;
 
-slice_number = c3-30;
+slice_number = c3 - 30;
 
 xmax = max([abs(max(x_shift(:))) abs(min(x_shift(:)))]);
 ymax = max([abs(max(y_shift(:))) abs(min(y_shift(:)))]);
@@ -324,7 +364,7 @@ ylimits = [-ymax ymax];
 zlimits = [-zmax zmax];
 
 if main_orientation == 2 % TRANSVERSAL = 2
-    Position = [1020 44 525 934];
+    Position = [355 220 1190 758];
     slice_direction = 'z';
     slice_offset = z_shift(c1,c2,slice_number) * 1e3;
     ax = 0;
@@ -343,19 +383,24 @@ elseif main_orientation == 1 % CORONAL = 1
     el = 0;
 end
 
-if read_sign == -1
+if read_sign < 0
     x_shift = flip(x_shift,1);
     y_shift = flip(y_shift,1);
     z_shift = flip(z_shift,1);
     img = flip(img,1);
 end
 
-if phase_sign == -1
+if phase_sign < 0
     x_shift = flip(x_shift,2);
     y_shift = flip(y_shift,2);
     z_shift = flip(z_shift,2);
     img = flip(img,2);
 end
+
+fig_filename = sprintf('img_maxgirf_slc%d_%s_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_topup%d_i%d_l%4.2f', slice_number, slice_type, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag, maxiter, lambda);
+title_text1 = sprintf('SLC = %d, %s slice, %s = %4.1f mm', slice_number, slice_type, slice_direction, slice_offset);
+title_text2 = sprintf('Gridding/PHC/CFC/SFC/GNC/TOPUP = %d/%d/%d/%d/%d/%d', gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, topup_flag);
+title_text3 = sprintf('max. iterations = %d, $$\\lambda$$ = %4.2f', maxiter, lambda);
 
 figure('Color', 'w', 'Position', Position);
 surf(x_shift(:,:,slice_number) * 1e3, y_shift(:,:,slice_number) * 1e3, z_shift(:,:,slice_number) * 1e3, abs(img(:,:,slice_number)), 'EdgeColor', 'none');
@@ -365,10 +410,7 @@ xlim(xlimits * 1e3);
 ylim(ylimits * 1e3);
 zlim(zlimits * 1e3);
 %caxis([0 15]);
-title({'Cartesian MaxGIRF', sprintf('SLC = %d, %s slice, %s = %4.1f mm', slice_number, slice_type, slice_direction, slice_offset), ...
-    sprintf('Gridding/PHC/CFC/SFC/GNC = %d/%d/%d/%d/%d', gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag), ...
-    sprintf('max. iterations = %d, $$\\lambda$$ = %4.2f', maxiter, lambda)}, ...
-    'FontWeight', 'normal', 'FontSize', FontSize, 'Interpreter', 'latex');
+title({'Cartesian MaxGIRF', title_text1,  title_text2, title_text3}, 'FontWeight', 'normal', 'FontSize', FontSize, 'Interpreter', 'latex');
 xlabel('x [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
 ylabel('y [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
 zlabel('z [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
@@ -376,8 +418,7 @@ set(gca, 'TickLabelInterpreter', 'latex');
 view(ax,el);
 set(gca, 'ZDir', 'reverse');
 drawnow;
-fig_filename = sprintf('img_maxgirf_slc%d_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_%s_i%d_l%4.2f_mag', slice_number, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, slice_type, maxiter, lambda);
-export_fig(fullfile(output_path, fig_filename), '-r300', '-tif');
+export_fig(fullfile(output_path, sprintf('%s_mag', fig_filename)), '-r300', '-tif');
 close gcf;
 
 %% Display the phase of an image
@@ -389,10 +430,7 @@ xlim(xlimits * 1e3);
 ylim(ylimits * 1e3);
 zlim(zlimits * 1e3);
 caxis([-180 180]);
-title({'Cartesian MaxGIRF', sprintf('SLC = %d, %s slice, %s = %4.1f mm', slice_number, slice_type, slice_direction, slice_offset), ...
-    sprintf('Gridding/PHC/CFC/SFC/GNC = %d/%d/%d/%d/%d', gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag), ...
-    sprintf('max. iterations = %d, $$\\lambda$$ = %4.2f', maxiter, lambda)}, ...
-    'FontWeight', 'normal', 'FontSize', FontSize, 'Interpreter', 'latex');
+title({'Cartesian MaxGIRF', title_text1, title_text2, title_text3}, 'FontWeight', 'normal', 'FontSize', FontSize, 'Interpreter', 'latex');
 xlabel('x [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
 ylabel('y [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
 zlabel('z [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
@@ -400,8 +438,7 @@ set(gca, 'TickLabelInterpreter', 'latex');
 view(ax,el);
 set(gca, 'ZDir', 'reverse');
 drawnow;
-fig_filename = sprintf('img_maxgirf_slc%d_gridding%d_phc%d_cfc%d_sfc%d_gnc%d_%s_i%d_l%4.2f_phase', slice_number, gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag, slice_type, maxiter, lambda);
-export_fig(fullfile(output_path, fig_filename), '-r300', '-tif');
+export_fig(fullfile(output_path, sprintf('%s_phase', fig_filename)), '-r300', '-tif');
 close gcf;
 
 %% Display a support mask
@@ -413,10 +450,7 @@ xlim(xlimits * 1e3);
 ylim(ylimits * 1e3);
 zlim(zlimits * 1e3);
 caxis([0 1]);
-title({'Cartesian MaxGIRF (mask)', sprintf('SLC = %d, %s slice, %s = %4.1f mm', slice_number, slice_type, slice_direction, slice_offset), ...
-    sprintf('Gridding/PHC/CFC/SFC/GNC = %d/%d/%d/%d/%d', gridding_flag, phc_flag, cfc_flag, sfc_flag, gnc_flag), ...
-    sprintf('max. iterations = %d, $$\\lambda$$ = %4.2f', maxiter, lambda)}, ...
-    'FontWeight', 'normal', 'FontSize', FontSize, 'Interpreter', 'latex');
+title({'Cartesian MaxGIRF (mask)', title_text1, title_text2, title_text3}, 'FontWeight', 'normal', 'FontSize', FontSize, 'Interpreter', 'latex');
 xlabel('x [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
 ylabel('y [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
 zlabel('z [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
@@ -424,5 +458,53 @@ set(gca, 'TickLabelInterpreter', 'latex', 'Color', 'k');
 view(ax,el);
 set(gca, 'ZDir', 'reverse');
 drawnow;
-export_fig(fullfile(output_path, mask_filename), '-r300', '-tif');
+export_fig(fullfile(output_path, sprintf('support_mask_slc%d_%s', slice_number, slice_type)), '-r300', '-tif');
+close gcf;
+
+%% Display three orthogonal images in the DCS (magnitude)
+figure('Color', 'w', 'Position', Position);
+hold on;
+surf(reshape(x_shift(:,:,c3) * 1e3, [Nkx Nky]), reshape(y_shift(:,:,c3) * 1e3, [Nkx Nky]), reshape(z_shift(:,:,c3) * 1e3, [Nkx Nky]), reshape(abs(img(:,:,c3)), [Nkx Nky]), 'EdgeColor', 'none'); % transversal
+surf(reshape(x_shift(c1,:,:) * 1e3, [Nky Nkz]), reshape(y_shift(c1,:,:) * 1e3, [Nky Nkz]), reshape(z_shift(c1,:,:) * 1e3, [Nky Nkz]), reshape(abs(img(c1,:,:)), [Nky Nkz]), 'EdgeColor', 'none'); % sagittal
+surf(reshape(x_shift(:,c2,:) * 1e3, [Nkx Nkz]), reshape(y_shift(:,c2,:) * 1e3, [Nkx Nkz]), reshape(z_shift(:,c2,:) * 1e3, [Nkx Nkz]), reshape(abs(img(:,c2,:)), [Nkx Nkz]), 'EdgeColor', 'none'); % coronal
+colormap(gray(256));
+axis image;
+xlim(xlimits * 1e3);
+ylim(ylimits * 1e3);
+zlim(zlimits * 1e3);
+%caxis([0 15]);
+title({'Cartesian MaxGIRF', title_text1,  title_text2, title_text3}, 'FontWeight', 'normal', 'FontSize', FontSize, 'Interpreter', 'latex');
+xlabel('x [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
+ylabel('y [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
+zlabel('z [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
+set(gca, 'TickLabelInterpreter', 'latex', 'Box', 'on', 'YDir', 'reverse', 'ZDir', 'reverse');
+view(25,19);
+hc = colorbar;
+set(hc, 'Position', [0.925257703081233 0.10868073878628 0.0179271708683475 0.815]);
+drawnow;
+export_fig(fullfile(output_path, sprintf('%s_mag_3D', fig_filename)), '-r300', '-tif', '-c[0, 0, 0, 0]');
+close gcf;
+
+%% Display three orthogonal images in the DCS (phase)
+figure('Color', 'w', 'Position', Position);
+hold on;
+surf(reshape(x_shift(:,:,c3) * 1e3, [Nkx Nky]), reshape(y_shift(:,:,c3) * 1e3, [Nkx Nky]), reshape(z_shift(:,:,c3) * 1e3, [Nkx Nky]), reshape(angle(img(:,:,c3)) * 180 / pi, [Nkx Nky]), 'EdgeColor', 'none'); % transversal
+surf(reshape(x_shift(c1,:,:) * 1e3, [Nky Nkz]), reshape(y_shift(c1,:,:) * 1e3, [Nky Nkz]), reshape(z_shift(c1,:,:) * 1e3, [Nky Nkz]), reshape(angle(img(c1,:,:)) * 180 / pi, [Nky Nkz]), 'EdgeColor', 'none'); % sagittal
+surf(reshape(x_shift(:,c2,:) * 1e3, [Nkx Nkz]), reshape(y_shift(:,c2,:) * 1e3, [Nkx Nkz]), reshape(z_shift(:,c2,:) * 1e3, [Nkx Nkz]), reshape(angle(img(:,c2,:)) * 180 / pi, [Nkx Nkz]), 'EdgeColor', 'none'); % coronal
+colormap(hsv(256));
+axis image;
+xlim(xlimits * 1e3);
+ylim(ylimits * 1e3);
+zlim(zlimits * 1e3);
+caxis([-180 180]);
+title({'Cartesian MaxGIRF', title_text1,  title_text2, title_text3}, 'FontWeight', 'normal', 'FontSize', FontSize, 'Interpreter', 'latex');
+xlabel('x [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
+ylabel('y [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
+zlabel('z [mm]', 'Interpreter', 'latex', 'FontSize', FontSize);
+set(gca, 'TickLabelInterpreter', 'latex', 'Box', 'on', 'YDir', 'reverse', 'ZDir', 'reverse');
+view(25,19);
+hc = colorbar;
+set(hc, 'Position', [0.925257703081233 0.10868073878628 0.0179271708683475 0.815]);
+drawnow;
+export_fig(fullfile(output_path, sprintf('%s_phase_3D', fig_filename)), '-r300', '-tif', '-c[0, 0, 0, 0]');
 close gcf;

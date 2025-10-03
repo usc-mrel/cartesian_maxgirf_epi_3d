@@ -120,11 +120,11 @@ end
 %--------------------------------------------------------------------------
 % Reconstruction parameters
 %--------------------------------------------------------------------------
-lambda              = json_fieldmap.recon_parameters.lambda;              % l2 regularization parameter
-tol                 = json_fieldmap.recon_parameters.tol;                 % PCG tolerance
-maxiter             = json_fieldmap.recon_parameters.maxiter;             % PCG maximum iteration 
-slice_type          = json_fieldmap.recon_parameters.slice_type;          % type of an excitation slice: "curved" vs "flat"
-gnl_correction_flag = json_fieldmap.recon_parameters.gnl_correction_flag; % 1=yes, 0=no
+lambda     = json_fieldmap.recon_parameters.lambda;     % l2 regularization parameter
+tol        = json_fieldmap.recon_parameters.tol;        % PCG tolerance
+maxiter    = json_fieldmap.recon_parameters.maxiter;    % PCG maximum iteration 
+slice_type = json_fieldmap.recon_parameters.slice_type; % type of an excitation slice: "curved" vs "flat"
+gnc_flag   = json_fieldmap.recon_parameters.gnc_flag;   % 1=yes, 0=no
 
 %--------------------------------------------------------------------------
 % Number of slices
@@ -178,7 +178,7 @@ Nz_fieldmap = header.encoding.reconSpace.matrixSize.z; % number of samples in im
 %--------------------------------------------------------------------------
 cfl_file = fullfile(output_path_fieldmap, 'TE');
 tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
-TE = real(readcfl(cfl_file)).';
+TE = real(readcfl(cfl_file));
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 
 %% Load a .cfl file
@@ -215,7 +215,7 @@ for slice_number = 1:nr_slices
     %----------------------------------------------------------------------
     % img (Nkx x Nky x Nkz)
     %----------------------------------------------------------------------
-    img_filename = sprintf('img_type1_slc%d_eco1_gnl%d_%s_i%d_l%4.2f', slice_number, gnl_correction_flag, slice_type, maxiter, lambda);
+    img_filename = sprintf('img_type1_slc%d_eco1_%s_gnc%d_i%d_l%4.2f', slice_number, slice_type, gnc_flag, maxiter, lambda);
     cfl_file = fullfile(output_path_fieldmap, img_filename);
     tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
     img_fieldmap(:,:,actual_slice_number,1,1,1) = readcfl(cfl_file);
@@ -224,7 +224,7 @@ for slice_number = 1:nr_slices
     %----------------------------------------------------------------------
     % img (Nkx x Nky x Nkz)
     %----------------------------------------------------------------------
-    img_filename = sprintf('img_type1_slc%d_eco2_gnl%d_%s_i%d_l%4.2f', slice_number, gnl_correction_flag, slice_type, maxiter, lambda);
+    img_filename = sprintf('img_type1_slc%d_eco2_%s_gnc%d_i%d_l%4.2f', slice_number, slice_type, gnc_flag, maxiter, lambda);
     cfl_file = fullfile(output_path_fieldmap, img_filename);
     tstart = tic; fprintf('%s: Reading a .cfl file: %s... ', datetime, cfl_file);
     img_fieldmap(:,:,actual_slice_number,1,1,2) = readcfl(cfl_file);
@@ -290,7 +290,6 @@ for echo_number = 1:2
     ksp_fieldmap_zpad(idx1_range, idx2_range, idx3_range, :, :, echo_number) = ksp_fieldmap;
 end
 
-
 %% Perform sinc interpolation in image space
 %--------------------------------------------------------------------------
 % Siemens: k-space <=> image space
@@ -310,7 +309,7 @@ img_fieldmap_interp = img_fieldmap_interp(idx1_range,idx2_range,:,:,:,:);
 %% Perform phase unwrapping
 tstart = tic; fprintf('%s: Performing phase unwrapping... ', datetime);
 img_phase = angle(img_fieldmap_interp); % [rad]
-img_phase = unwrap(img_phase, [], 6); % Nx x Ny x nr_slices x 1 x 1 x 2
+img_phase = unwrap(img_phase, [], 6); % Nx x Ny x Nz x 1 x 1 x 2
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 
 %% Normalize the phase
@@ -391,9 +390,9 @@ fieldmap_smooth = fieldmap_smooth .* mask;
 
 %% Write a .cfl file
 %--------------------------------------------------------------------------
-% fieldmap_raw (Nx x Ny x Nz)
+% fieldmap_raw (Nkx x Nky x Nkz)
 %--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('fieldmap_raw_gnl%d_%s', gnl_correction_flag, slice_type));
+cfl_file = fullfile(output_path, 'fieldmap_raw');
 tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
 writecfl(cfl_file, fieldmap_raw);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
@@ -401,7 +400,20 @@ fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
 %--------------------------------------------------------------------------
 % fieldmap_smooth (Nkx x Nky x Nkz)
 %--------------------------------------------------------------------------
-cfl_file = fullfile(output_path, sprintf('fieldmap_smooth_gnl%d_%s', gnl_correction_flag, slice_type));
+cfl_file = fullfile(output_path, 'fieldmap_smooth');
 tstart = tic; fprintf('%s: Writing a .cfl file: %s... ', datetime, cfl_file);
 writecfl(cfl_file, fieldmap_smooth);
 fprintf('done! (%6.4f/%6.4f sec)\n', toc(tstart), toc(start_time));
+
+%% Display a fieldmap
+FontSize = 12;
+cmap = colorcet('D1');
+
+figure('Color', 'w');
+montage(fieldmap_smooth, 'DisplayRange', []);
+clim([-40 40]);
+title({'Smoothed static off-resonance map [Hz]'}, 'FontSize', FontSize, 'Interpreter', 'latex');
+colormap(cmap);
+colorbar;
+export_fig(fullfile(output_path, 'fieldmap_smooth'), '-r300', '-tif');
+close gcf;
